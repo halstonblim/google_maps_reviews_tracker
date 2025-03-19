@@ -1,6 +1,11 @@
 # Google Maps Reviews Tracker
 
-A Python tool for scraping and analyzing Google Maps reviews for any location.
+A Python tool for scraping and analyzing the trend of Google Maps reviews for any location - just provide the url! After scraping the reviews and storing to a CSV file, the code also plots the average reviews over the past year.
+
+This tool was inspired by my personal experience, where I was shocked and disappointed following a recent visit to a favorite restaurant in March 2025. I wanted to know when the restaurant started to go downhill, and decided to use Google Maps reviews to quantify the trend over the past year.
+
+![Unfortunate demise of a favorite restaurant](monthly_reviews.png)
+
 
 ## Features
 
@@ -8,7 +13,7 @@ A Python tool for scraping and analyzing Google Maps reviews for any location.
 - Sort reviews by newest first
 - Extract ratings and timestamps
 - Convert relative time texts (e.g., "2 days ago") to exact timestamps
-- Save results to CSV for further analysis
+- Save results to CSV for further analysis. If CSV already exists, can simply load CSV instead of scraping again.
 - Generate a monthly review trend plot showing:
   - Average rating by month
   - Number of reviews per month
@@ -51,7 +56,7 @@ python maps_review_scraper.py --url <google-maps-url> [options]
 #### Scrape Reviews and Generate Plot
 
 ```
-python maps_review_scraper.py --url "https://maps.app.goo.gl/aJCRiy3C5gtoBZpJ7" --max-reviews 100 --wait-time 12 --plot
+python maps_review_scraper.py --url "https://maps.app.goo.gl/aJCRiy3C5gtoBZpJ7" --max-reviews 300 --wait-time 12 --plot
 ```
 
 #### Load Existing Reviews and Generate Plot
@@ -84,7 +89,7 @@ from maps_review_scraper import scrape_reviews, plot_reviews_by_month
 # Scrape reviews
 reviews_df = scrape_reviews(
     url="https://maps.app.goo.gl/aJCRiy3C5gtoBZpJ7", 
-    max_reviews=100,
+    max_reviews=300,
     wait_time=12
 )
 
