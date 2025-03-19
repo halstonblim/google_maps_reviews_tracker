@@ -6,7 +6,7 @@ A Python tool for scraping and analyzing Google Maps reviews for any location.
 
 - Scrape reviews from any Google Maps location URL
 - Sort reviews by newest first
-- Extract reviewer names, ratings, and timestamps
+- Extract ratings and timestamps
 - Convert relative time texts (e.g., "2 days ago") to exact timestamps
 - Save results to CSV for further analysis
 - Generate a monthly review trend plot showing:

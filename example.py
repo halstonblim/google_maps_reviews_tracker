@@ -20,7 +20,7 @@ def main():
     # Example parameters
     url = "https://maps.app.goo.gl/aJCRiy3C5gtoBZpJ7"
     output_file = "reviews.csv"
-    max_reviews = 100
+    max_reviews = 500
     wait_time = 12
     plot_output = "monthly_reviews.png"
     

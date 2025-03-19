@@ -357,30 +357,25 @@ def scrape_reviews(url, max_reviews=None, wait_time=10):
         
         for element in elements_to_process:
             try:
+                # Get review time first to check if we should skip this review
+                time_element = element.find_element(By.CSS_SELECTOR, "span.rsqaWe")
+                time_text = time_element.text
+                
+                # Skip reviews containing "a year ago" or "years ago"
+                if "a year ago" in time_text.lower() or "years ago" in time_text.lower():
+                    print(f"Skipping review with time text: {time_text}")
+                    continue
+                
                 # Get rating
                 rating_element = element.find_element(By.CSS_SELECTOR, "span.kvMYJc")
                 aria_label = rating_element.get_attribute("aria-label")
                 rating = float(aria_label.split()[0].replace(",", "."))
                 
-                # Get review time
-                time_element = element.find_element(By.CSS_SELECTOR, "span.rsqaWe")
-                time_text = time_element.text
-                
                 # Parse the time text to get exact datetime
                 exact_time = parse_time_text(time_text)
                 
-                # Get reviewer name
-                try:
-                    reviewer_name = element.find_element(By.CSS_SELECTOR, "div.d4r55").text
-                except NoSuchElementException:
-                    try:
-                        reviewer_name = element.find_element(By.CSS_SELECTOR, "span.X7jCAb").text
-                    except NoSuchElementException:
-                        reviewer_name = "Unknown Reviewer"
-                
                 reviews.append({
                     "location": location_name,
-                    "reviewer_name": reviewer_name,
                     "rating": rating,
                     "time_text": time_text,
                     "exact_time": exact_time,
@@ -407,6 +402,7 @@ def scrape_reviews(url, max_reviews=None, wait_time=10):
 def plot_reviews_by_month(df, output_path='reviews_by_month.png'):
     """
     Plot the average review score by month with number of reviews as bar labels.
+    Only includes reviews less than a year old.
     
     Args:
         df: DataFrame containing the reviews
@@ -420,6 +416,12 @@ def plot_reviews_by_month(df, output_path='reviews_by_month.png'):
     if rating_column not in plot_df.columns:
         print("Error: Could not find rating column (tried 'rating' and 'score')")
         return
+    
+    # Get location name if available
+    location_name = "Google Maps Reviews"
+    if 'location' in plot_df.columns and not plot_df['location'].empty:
+        # Use the most common location name (in case there are multiple)
+        location_name = plot_df['location'].mode().iloc[0]
     
     # Determine the column name for time (either 'datetime', 'exact_time', or 'time_text')
     time_column = None
@@ -447,6 +449,27 @@ def plot_reviews_by_month(df, output_path='reviews_by_month.png'):
         except:
             print(f"Error: Could not convert {time_column} to datetime")
             return
+    
+    # Filter out reviews older than a year
+    one_year_ago = datetime.datetime.now() - pd.DateOffset(years=1)
+    original_count = len(plot_df)
+    plot_df = plot_df[plot_df[time_column] >= one_year_ago]
+    filtered_count = original_count - len(plot_df)
+    
+    if filtered_count > 0:
+        print(f"Filtered out {filtered_count} reviews older than a year for plotting")
+    
+    if len(plot_df) == 0:
+        print("No reviews within the last year to plot")
+        return
+    
+    # Also filter out reviews with time_text containing "year ago" or "years ago"
+    if 'time_text' in plot_df.columns:
+        year_mask = plot_df['time_text'].str.lower().str.contains('year ago|years ago')
+        if year_mask.any():
+            count_before = len(plot_df)
+            plot_df = plot_df[~year_mask]
+            print(f"Filtered out {count_before - len(plot_df)} additional reviews with 'year ago' in time text")
     
     # Extract month and year from datetime
     plot_df['year_month'] = plot_df[time_column].dt.to_period('M')
@@ -493,7 +516,7 @@ def plot_reviews_by_month(df, output_path='reviews_by_month.png'):
     plt.xticks(rotation=45)
     
     # Set title and adjust layout
-    plt.title('Average Review Score by Month', fontsize=14, pad=20)
+    plt.title(f'{location_name}: Average Review Score by Month (Last 12 Months)', fontsize=14, pad=20)
     plt.tight_layout()
     
     # Save the figure
@@ -509,7 +532,7 @@ def main():
     parser.add_argument('--max-reviews', '-m', type=int, help='Maximum number of reviews to scrape')
     parser.add_argument('--wait-time', '-w', type=int, default=10, help='Time to wait between scrolls in seconds (default: 10)')
     parser.add_argument('--plot', '-p', action='store_true', help='Generate a plot of average reviews by month')
-    parser.add_argument('--plot-output', type=str, default='reviews_by_month.png', help='Path to save the plot image (default: reviews_by_month.png)')
+    parser.add_argument('--plot-output', type=str, default='monthly_reviews.png', help='Path to save the plot image (default: monthly_reviews.png)')
     parser.add_argument('--load-reviews', '-l', type=str, help='Load previously scraped reviews from CSV file instead of scraping')
     args = parser.parse_args()
     
