@@ -361,11 +361,6 @@ def scrape_reviews(url, max_reviews=None, wait_time=10):
                 time_element = element.find_element(By.CSS_SELECTOR, "span.rsqaWe")
                 time_text = time_element.text
                 
-                # Skip reviews containing "a year ago" or "years ago"
-                if "a year ago" in time_text.lower() or "years ago" in time_text.lower():
-                    print(f"Skipping review with time text: {time_text}")
-                    continue
-                
                 # Get rating
                 rating_element = element.find_element(By.CSS_SELECTOR, "span.kvMYJc")
                 aria_label = rating_element.get_attribute("aria-label")
